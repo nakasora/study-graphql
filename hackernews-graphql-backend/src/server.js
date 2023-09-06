@@ -1,29 +1,32 @@
 const { ApolloServer, gql } = require("apollo-server");
+const { PrismaClient } = require("@prisma/client");
+const prisma = new PrismaClient();
+
 const fs = require("fs");
 const path = require("path");
-const { PrismaClient } = require("@prisma/client");
+
 const { getUserId } = require("./utils");
-const prisma = new PrismaClient();
 const Query = require("./resolvers/Query");
 const Mutation = require("./resolvers/Mutation");
+const Subscription = require("./resolvers/Subscription");
 const Link = require("./resolvers/Link");
 const User = require("./resolvers/User");
-//HackerNewsの1つ1つの投稿
-let links = [
-  {
-    id: "link-0",
-    description: "GraphQLチュートリアルをUdemyで学ぶ",
-    url: "www.graphql.com",
-  },
-];
+const Vote = require("./resolvers/Vote");
+
+//サブスクリプションの実装
+// Publisher/Subscriber
+const { PubSub } = require("apollo-server");
+const pubsub = new PubSub();
 
 //リゾルバ関数
 // 型に何か実態をいれる
 const resolvers = {
   Query,
   Mutation,
+  Subscription,
   Link,
   User,
+  Vote,
 };
 
 const server = new ApolloServer({
@@ -33,6 +36,7 @@ const server = new ApolloServer({
     return {
       ...req,
       prisma,
+      pubsub,
       userId: req && req.headers.authorization ? getUserId(req) : null,
     };
   },
